@@ -1,0 +1,17 @@
+{
+  "name": "itinerisltd/kinsta-mu-plugins",
+  "description": "Handles the purge of the server level caching.",
+  "type": "wordpress-muplugin",
+  "license": "proprietary",
+  "require": {
+    "composer/installers": "^1.6"
+  },
+  "extra": {
+    "composify": {
+      "zip": "https://kinsta.com/kinsta-tools/kinsta-mu-plugins.zip",
+      "file": "kinsta-mu-plugins.php",
+      "version": "2.1.2",
+      "build-at": "2018-12-18T10:26:59.377Z"
+    }
+  }
+}
