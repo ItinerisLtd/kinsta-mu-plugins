@@ -26,13 +26,13 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 	<div class='kinsta-page-wrapper'>
 		<div class='kinsta-sidebar'>
 			<?php if ( $this->kinsta_cache->has_object_cache ) : ?>
-				<?php include 'partials/sidebar-purge-has-object-cache.php'; ?>
+				<?php include plugin_dir_path( __FILE__ ) . 'partials/sidebar-purge-has-object-cache.php'; ?>
 			<?php else : ?>
-				<?php include 'partials/sidebar-purge-no-object-cache.php'; ?>
+				<?php include plugin_dir_path( __FILE__ ) . 'partials/sidebar-purge-no-object-cache.php'; ?>
 			<?php endif ?>
 			<?php
 			if ( KINSTAMU_WHITELABEL === false ) {
-				include 'partials/sidebar-support.php';
+				include plugin_dir_path( __FILE__ ) . 'partials/sidebar-support.php';
 			}
 			?>
 		</div>
@@ -55,7 +55,7 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 						</p>
 						<?php
 						if ( defined( 'KINSTAMU_DISABLE_AUTOPURGE' ) && KINSTAMU_DISABLE_AUTOPURGE === true ) {
-							$warning_msg  = '<strong>' . __( 'Automatic cache purging has been disabled.', 'kinsta-mu-plugins' ) . '</strong>';
+							$warning_msg = '<strong>' . __( 'Automatic cache purging has been disabled.', 'kinsta-mu-plugins' ) . '</strong>';
 							// Translators: %1$s KINSTAMU_DISABLE_AUTOPURGE, %2$s false.
 							$warning_msg .= sprintf( __( 'This means that the page cache stored on the server will not be cleared automatically after a post or page is updated, deleted, or published. If you would like to enable automatic cache purging please remove the %1$s constant from your site\'s wp-config.php file or set its value to %2$s.', 'kinsta-mu-plugins' ), '<code>KINSTAMU_DISABLE_AUTOPURGE</code>', '<code>false</code>' );
 							?>
@@ -72,7 +72,7 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 						</div>
 						<?php } ?>
 					</div>
-					<?php require 'partials/settings-form.php'; ?>
+					<?php require plugin_dir_path( __FILE__ ) . 'partials/settings-form.php'; ?>
 				</div>
 			</div>
 		</div>

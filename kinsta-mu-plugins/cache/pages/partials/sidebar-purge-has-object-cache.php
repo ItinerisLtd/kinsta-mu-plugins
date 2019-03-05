@@ -9,6 +9,10 @@
 
 namespace Kinsta;
 
+if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
+	die( 'No script kiddies please!' );
+}
+
 ?>
 
 <div class='kinsta-widget'>

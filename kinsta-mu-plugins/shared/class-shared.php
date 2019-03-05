@@ -28,12 +28,11 @@ class Shared {
 	public function __construct() {
 		add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'assets' ) );
-		add_action( 'wp_ajax_kinsta_save_option', array( $this, 'save_option' ) );
 		add_action( 'admin_head', array( $this, 'init_tooltipster' ) );
 		add_action( 'admin_body_class', array( $this, 'body_classes' ) );
 
 		if ( KINSTAMU_WHITELABEL === false ) {
-			add_filter( 'admin_footer_text', array( $this, 'modify_admin_footer_text' ), 99 );
+			add_filter( 'admin_footer_text', [ $this, 'modify_admin_footer_text' ], 99 );
 		}
 	}
 
@@ -86,22 +85,6 @@ class Shared {
 	}
 
 	/**
-	 * Save the option to the database
-	 *
-	 * @return void
-	 */
-	public function save_option() {
-		if ( ! wp_verify_nonce( $_POST['nonce'], $_POST['name'] ) ) {
-			die();
-		}
-
-		$options = get_option( $_POST['option_name'] );
-		$this->set_options_array_value( $options, $_POST['name'], $_POST['value'] );
-		update_option( $_POST['option_name'], $options );
-		die();
-	}
-
-	/**
 	 * Load assets in the Kinsta plugin setting page.
 	 *
 	 * @param  string $page The page slug.
@@ -114,7 +97,6 @@ class Shared {
 
 		wp_enqueue_style( 'kinsta-shared', $this->shared_resource_url( 'shared/styles/common.css' ), array(), KINSTAMU_VERSION );
 		wp_enqueue_script( 'kinsta-loader', $this->shared_resource_url( 'shared/scripts/kinsta-loader.js' ), array( 'jquery', 'jquery-effects-core' ), KINSTAMU_VERSION, true );
-		wp_enqueue_script( 'kinsta-quicksave', $this->shared_resource_url( 'shared/scripts/kinsta-quicksave.js' ), array( 'jquery' ), KINSTAMU_VERSION, true );
 
 		wp_enqueue_script( 'tooltipster', $this->shared_resource_url( 'shared/scripts/tooltipster.bundle.min.js' ), array( 'jquery' ), KINSTAMU_VERSION, true );
 		wp_enqueue_style( 'tooltipster', $this->shared_resource_url( 'shared/styles/tooltipster.bundle.css' ), array(), KINSTAMU_VERSION );
@@ -159,13 +141,11 @@ class Shared {
 	 * @param  string  $name        The option name (key).
 	 * @param  string  $value       The $name value.
 	 * @param  string  $label       The control lable.
-	 * @param  boolean $quicksave   Whether to save the the new change immediately (no click save button).
 	 * @param  boolean $info        Whether to show the tooltip.
 	 * @param  boolean $options     Options to show in the select field.
 	 * @return void
 	 */
-	public static function kinsta_select_field( $option_name, $name, $value, $label, $quicksave = true, $info = false, $options ) {
-		$class = ( true === $quicksave ) ? 'kinsta-quicksave' : '';
+	public static function kinsta_select_field( $option_name, $name, $value, $label, $info = false, $options ) {
 		?>
 		<div class='kinsta-select-field kinsta-control-container <?php echo esc_attr( $class ); ?>' data-option-name="<?php echo esc_attr( $option_name ); ?>">
 			<label>
@@ -176,7 +156,7 @@ class Shared {
 				</select>
 				<span class='kinsta-label'><?php echo esc_attr( $label ); ?></span>
 			</label>
-			<input type='hidden' name='kinsta-nonce' value='<?php echo esc_attr( wp_create_nonce( $name ) ); ?>'>
+			<input type='hidden' name='kinsta-nonce' value='<?php echo esc_attr( 'kinsta_select_field_' . wp_create_nonce( $name ) ); ?>'>
 			<?php self::kinsta_tooltip( $info, $name ); ?>
 		</div>
 		<?php

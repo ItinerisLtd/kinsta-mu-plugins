@@ -41,8 +41,8 @@ class Kinsta_Commands {
 			return;
 		}
 
-		require_once 'wp-cli/class-plugin-list-command.php';
-		require_once 'wp-cli/class-cache-purge-command.php';
+		require_once plugin_dir_path( __FILE__ ) . 'wp-cli/class-plugin-list-command.php';
+		require_once plugin_dir_path( __FILE__ ) . 'wp-cli/class-cache-purge-command.php';
 
 		$banned_plugins = $this->get_banned_plugins();
 

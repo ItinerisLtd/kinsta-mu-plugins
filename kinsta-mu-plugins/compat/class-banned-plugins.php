@@ -171,12 +171,12 @@ class Banned_Plugins {
 	 */
 	public function compatibility_admin_notices() {
 
-		// Check if the WORDFENCE_DISABLE_LIVE_TRAFFIC is set to "false"
-		if( !WORDFENCE_DISABLE_LIVE_TRAFFIC ) {
+		// Check if the WORDFENCE_DISABLE_LIVE_TRAFFIC is set to "false".
+		if ( ! WORDFENCE_DISABLE_LIVE_TRAFFIC ) {
 			?>
 			<div id="kinsta-banned-plugins-nag" class="notice notice-kinsta notice-error">
 				<p>
-					<?php _e('We\'ve detected that the <code>WORDFENCE_DISABLE_LIVE_TRAFFIC</code> constant has been set to <code>false</code>. This can cause significant performance issues for your site. Please remove this constant from your site\'s wp-config.php file or from the plugin or theme file where it has been defined.', 'kinsta-mu-plugins'); ?>
+					<?php esc_html_e( 'We\'ve detected that the <code>WORDFENCE_DISABLE_LIVE_TRAFFIC</code> constant has been set to <code>false</code>. This can cause significant performance issues for your site. Please remove this constant from your site\'s wp-config.php file or from the plugin or theme file where it has been defined.', 'kinsta-mu-plugins' ); ?>
 				</p>
 			</div>
 			<?php
@@ -390,7 +390,7 @@ class Banned_Plugins {
 			$heading = _n( 'Banned plugin detected', 'Banned plugins detected', count( $notifiable_plugins ), 'kinsta-mu-plugins' );
 
 			// Translators: 1st %s the "heading" (e.g. Kinsta detected a banned plugin), 2nd %s plugin names.
-			$notice_content  = '<p>' . sprintf( '<strong>%s</strong>: %s.', $heading, implode( ', ', $notifiable_plugins ) ) . '</p>';
+			$notice_content = '<p>' . sprintf( '<strong>%s</strong>: %s.', $heading, implode( ', ', $notifiable_plugins ) ) . '</p>';
 
 			$notice_content .= '<p>' . __( 'Using a banned plugin can cause performance issues for your site or compatibility issues with the hosting platform.', 'kinsta-mu-plugins' ) . '</p>';
 
@@ -508,12 +508,16 @@ class Banned_Plugins {
 			foreach ( $this->warning_list as $warning ) {
 				$warning_slugs[] = self::parse_plugin_slug( $warning );
 			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
 			$warning_data = 'var kinstaWarningPlugins = ' . json_encode( $warning_slugs ) . ';';
 
 			$disabled_slugs = [];
 			foreach ( $this->disabled_list as $disabled ) {
 				$disabled_slugs[] = self::parse_plugin_slug( $disabled );
 			}
+
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.json_encode_json_encode
 			$disabled_data = 'var kinstaDisabledPlugins = ' . json_encode( $disabled_slugs ) . ';';
 
 			echo '<script type="text/javascript">' . wp_kses( $warning_data . $disabled_data, [] ) . '</script>';
@@ -656,14 +660,15 @@ class Banned_Plugins {
 
 	/**
 	 * Disable wordfence's live logging
-	 * @return void 
+	 *
+	 * @return void
 	 */
 	private function disable_wordfences_livelogging() {
 
-		if( !defined('WORDFENCE_DISABLE_LIVE_TRAFFIC') ) {
+		if ( ! defined( 'WORDFENCE_DISABLE_LIVE_TRAFFIC' ) ) {
 
-			// Disable live logging
-			define('WORDFENCE_DISABLE_LIVE_TRAFFIC', true);
+			// Disable live logging.
+			define( 'WORDFENCE_DISABLE_LIVE_TRAFFIC', true );
 		}
 
 	}

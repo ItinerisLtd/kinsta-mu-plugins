@@ -15,12 +15,11 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 
 /* Defines */
 define( 'KINSTA_CDN_ENABLER_MIN_WP', '3.8' );
-define( 'KINSTA_SERVERNAME_CDN_DOMAIN', 'KINSTA_CDN_DOMAIN' );
-define( 'KINSTA_SERVERNAME_CDN_OTHERDOMAIN', 'KINSTA_CDN_OTHERDOMAINS' );
 
 /* Requires */
-require_once 'class-cdn-enabler.php';
-require_once 'class-cdn-rewriter.php';
+require_once plugin_dir_path( __FILE__ ) . 'utilities.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-cdn-enabler.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-cdn-rewriter.php';
 
 /* Start CDN related stuff */
 $cdn_enabler = new CDN_Enabler();

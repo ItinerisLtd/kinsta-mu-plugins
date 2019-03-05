@@ -53,7 +53,7 @@ class CDN_Rewriter {
 	 *
 	 * @var array
 	 */
-	public $excludes = array();
+	public $exclude_types = array();
 
 	/**
 	 * Is relative URL?
@@ -67,27 +67,29 @@ class CDN_Rewriter {
 	 *
 	 * @param string $site_url The site URL.
 	 * @param string $cdn_url  The CDN URL.
-	 * @param string $dirs     Comma separated list of directories.
-	 * @param array  $excludes Assets to exclude from the CDN.
+	 * @param string $dirs Comma separated list of directories.
+	 * @param array  $exclude_types List of asset types to to exclude from the CDN.
 	 * @param bool   $relative Is relative URL?.
-	 * @param bool   $https    Is HTTPS?.
+	 * @param bool   $https Is HTTPS?.
 	 */
-	public function __construct( $site_url, $cdn_url, $dirs, array $excludes, $relative, $https ) {
+	public function __construct( $site_url, $cdn_url, $dirs, array $exclude_types, $relative, $https ) {
 		$this->site_url = $site_url;
 		$this->cdn_url = $cdn_url;
 		$this->dirs = $dirs;
-		$this->excludes = $excludes;
+		$this->exclude_types = $exclude_types;
 		$this->relative = $relative;
 		$this->https = $https;
 	}
 
 	/**
-	 * Exclude asset from CDN
+	 * Check if the asset should be excluded from the CDN.
 	 *
 	 * @param string $asset URL of the asset.
+	 *
+	 * @return boolean
 	 */
-	protected function exclude_asset( &$asset ) {
-		foreach ( $this->excludes as $exclude ) {
+	protected function exclude_asset( $asset ) {
+		foreach ( $this->exclude_types as $exclude ) {
 			if ( ! ! $exclude && stristr( $asset, $exclude ) !== false ) {
 				return true;
 			}
@@ -101,7 +103,7 @@ class CDN_Rewriter {
 	 * @param  string $asset Asset URL.
 	 * @return string        The asset with CDN URL
 	 */
-	protected function rewrite_url( $asset ) {
+	public function rewrite_url( $asset ) {
 		if ( $this->exclude_asset( $asset[0] ) ) {
 			return $asset[0];
 		}

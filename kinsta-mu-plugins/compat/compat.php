@@ -13,10 +13,10 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 }
 
 // Load required files.
-require_once 'utilities.php';
-require_once 'class-banned-plugins.php';
-require_once 'class-kinsta-commands.php';
-require_once 'class-security.php';
+require_once plugin_dir_path( __FILE__ ) . 'utilities.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-banned-plugins.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-kinsta-commands.php';
+require_once plugin_dir_path( __FILE__ ) . 'class-security.php';
 
 // Roll the "Banned Plugins" feature.
 $banned_plugins = new Banned_Plugins();

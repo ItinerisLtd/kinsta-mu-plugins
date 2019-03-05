@@ -150,7 +150,7 @@ class Cache_Admin {
 		if ( ! empty( $_POST ) ) { // WPCS: CSRF ok.
 			$this->kinsta_cache->save_plugin_options();
 		}
-		include 'pages/pages.php';
+		include plugin_dir_path( __FILE__ ) . 'pages/pages.php';
 	}
 
 	/**

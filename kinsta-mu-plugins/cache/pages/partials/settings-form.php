@@ -9,6 +9,10 @@
 
 namespace Kinsta;
 
+if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
+	die( 'No script kiddies please!' );
+}
+
 ?>
 <form method="post">
 	<div class='kinsta-box'>
@@ -48,7 +52,6 @@ namespace Kinsta;
 						'single',
 						'',
 						false,
-						false,
 						array(
 							'single' => 'Single Path',
 							'group' => 'Group Path',
@@ -76,10 +79,10 @@ namespace Kinsta;
 				echo '<tbody>';
 
 			if ( ! empty( $additional_paths ) ) {
-				foreach ( $additional_paths as $path ) {
+				foreach ( $additional_paths as $additional_path ) {
 					echo '<tr>';
-					echo '<td>' . esc_html( $path['type'] ) . '</td>';
-					echo '<td>/' . esc_html( $path['path'] ) . '</td>';
+					echo '<td>' . esc_html( $additional_path['type'] ) . '</td>';
+					echo '<td>/' . esc_html( $additional_path['path'] ) . '</td>';
 					echo '<td><a class="removePath" href="#">remove</a></td>';
 					echo '</tr>';
 				}

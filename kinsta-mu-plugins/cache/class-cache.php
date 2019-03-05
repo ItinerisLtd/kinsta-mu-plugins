@@ -211,7 +211,7 @@ class Cache {
 	 */
 	public function save_plugin_options() {
 		if ( ! isset( $_POST['kinsta_nonce'] ) || ! wp_verify_nonce( $_POST['kinsta_nonce'], 'save_plugin_options' ) ) {
-			exit;
+			die();
 		}
 
 		$new_rules = $_POST['rules'];
@@ -264,6 +264,8 @@ class Cache {
 	 * @return void
 	 */
 	public function action_kinsta_clear_cache_full_page() {
+
+		check_ajax_referer( 'kinsta-clear-cache-full-page', 'kinsta_nonce' );
 		$this->kinsta_cache_purge->purge_complete_full_page_cache();
 		if ( isset( $_GET ) && isset( $_GET['source'] ) && 'adminbar' == $_GET['source'] ) { // WPCS: CSRF ok, loose comparison ok.
 			header( 'Location: ' . add_query_arg( 'kinsta-cache-cleared', 'true', $_SERVER['HTTP_REFERER'] ) );

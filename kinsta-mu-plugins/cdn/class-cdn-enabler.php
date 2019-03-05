@@ -15,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 	die( 'No script kiddies please!' );
 }
 
+use Kinsta\CDN;
+
 /**
  * CDN Enabler class
  *
@@ -80,6 +82,8 @@ class CDN_Enabler {
 			add_filter( "rest_prepare_{$post_type}", array( $this, 'handle_rest_api_rewrite_hook' ) );
 		}
 
+		add_filter( 'wp_get_attachment_image_src', array( $this, 'handle_image_src_rewrite_hook' ) );
+		add_filter( 'wp_calculate_image_srcset', array( $this, 'handle_image_srcset_rewrite_hook' ) );
 		add_action( 'template_redirect', array( $this, 'handle_rewrite_hook' ) );
 		add_action( 'all_admin_notices', array( $this, 'requirements_check' ) );
 	}
@@ -101,7 +105,7 @@ class CDN_Enabler {
 						// translators: %1$s minimum WP version, %2$s MyKinsta Dashboard link.
 						__( 'Kinsta CDN enabler is optimized for WordPress %1$s. Please disable CDN via %2$s or upgrade your WordPress installation (recommended).', 'kinsta-mu-plugins' ),
 						KINSTA_CDN_ENABLER_MIN_WP,
-						'<a href="https://my.kintsa.com" target="_blank" title="My Kinsta Dashboard">' . __( 'MyKinsta Dashboard', 'kinsta-mu-plugins' ) . '</a>'
+						'<a href="https://my.kinsta.com" target="_blank" title="My Kinsta Dashboard">' . __( 'MyKinsta Dashboard', 'kinsta-mu-plugins' ) . '</a>'
 					)
 				)
 			);
@@ -119,7 +123,7 @@ class CDN_Enabler {
 	public static function get_options() {
 
 		$custom = array();
-
+		$custom['exclude_types'] = '.php';
 		$custom['dirs'] = 'wp-content,wp-includes,images';
 
 		if ( defined( 'KINSTA_CDN_USERDIRS' ) && ! empty( KINSTA_CDN_USERDIRS ) ) {
@@ -131,8 +135,8 @@ class CDN_Enabler {
 		if ( isset( $_SERVER['KINSTA_CDN_DIRECTORIES'] ) && '' !== $_SERVER['KINSTA_CDN_DIRECTORIES'] ) {
 			$custom['dirs'] = $_SERVER['KINSTA_CDN_DIRECTORIES'];
 		}
-		if ( isset( $_SERVER['KINSTA_CDN_EXEPTIONS'] ) && '' !== $_SERVER['KINSTA_CDN_EXEPTIONS'] ) {
-			$custom['excludes'] = $_SERVER['KINSTA_CDN_EXEPTIONS'];
+		if ( isset( $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'] ) && '' !== $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'] ) {
+			$custom['exclude_types'] .= ',' . $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'];
 		}
 		if ( isset( $_SERVER['KINSTA_CDN_HTTPS'] ) && '' !== $_SERVER['KINSTA_CDN_HTTPS'] ) {
 			$custom['https'] = $_SERVER['KINSTA_CDN_HTTPS'];
@@ -143,7 +147,7 @@ class CDN_Enabler {
 			array(
 				'url' => get_option( 'home' ),
 				'dirs' => 'wp-content,wp-includes,images',
-				'excludes' => '.php',
+				'exclude_types' => '.php',
 				'relative' => 1,
 				'https' => 1,
 			)
@@ -166,8 +170,51 @@ class CDN_Enabler {
 			return;
 		}
 
-		$excludes = array_map( 'trim', explode( ',', $this->options['excludes'] ) );
+		$exclude_types = CDN\sanitize_exclude_types( $this->options['exclude_types'] );
+		$rewriter = new CDN_Rewriter(
+			$this->get_url_to_replace(),
+			$this->options['url'],
+			$this->options['dirs'],
+			$exclude_types,
+			$this->options['relative'],
+			$this->options['https']
+		);
 
+		ob_start(
+			array( &$rewriter, 'rewrite' )
+		);
+	}
+
+	/**
+	 * Function to rewrite the attachment URL to CDN URL.
+	 *
+	 * This will affect the URL output of the `wp_get_attachment_url` function.
+	 *
+	 * @param array|false $image  Either array with src, width & height, icon src, or false.
+	 * @return string
+	 */
+	public function handle_image_src_rewrite_hook( $image ) {
+
+		/**
+		 * Only rewrite URL renderred on the front-end and rest-api request.
+		 * The attachment URL shown on admin page (the Media page as well as the one added to content
+		 * in the post editor) should still be pointing to the site URL instead of to the CDN URL.
+		 */
+		if ( is_admin() && self::is_admin_referred() ) {
+			return $image;
+		}
+
+		$home_url = get_option( 'home' );
+
+		/**
+		 * Check if it doesn't need to run.
+		 * If it does not immediately return the WP_REST_Response.
+		 */
+		if ( ! $this->options || $home_url == $this->options['url'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+			return $url;
+		}
+
+		$excludes = array_map( 'trim', explode( ',', $this->options['excludes'] ) );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
@@ -176,9 +223,66 @@ class CDN_Enabler {
 			$this->options['relative'],
 			$this->options['https']
 		);
-		ob_start(
-			array( &$rewriter, 'rewrite' )
+
+		if ( is_array( $image ) ) {
+			list( $src, $width, $height ) = $image;
+
+			// Value passed to the `rewrite_url` method must be an array.
+			return array( $rewriter->rewrite_url( [ $src ] ), $width, $height );
+		}
+
+		return $image;
+	}
+
+	/**
+	 * Function to rewrite the image URL in srcset to CDN URL.
+	 *
+	 * @param array $sources One or more arrays of source data to include in the 'srcset'.
+	 * @return string
+	 */
+	public function handle_image_srcset_rewrite_hook( $sources ) {
+
+		/**
+		 * Only rewrite URL renderred on the front-end and rest-api request.
+		 * The attachment URL shown on admin page (the Media page as well as the one added to content
+		 * in the post editor) should still be pointing to the site URL instead of to the CDN URL.
+		 */
+		if ( is_admin() && self::is_admin_referred() ) {
+			return $sources;
+		}
+
+		$home_url = get_option( 'home' );
+
+		/**
+		 * Check if it doesn't need to run.
+		 * If it does not immediately return the WP_REST_Response.
+		 */
+		if ( ! $this->options || $home_url == $this->options['url'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+			return $url;
+		}
+
+		$excludes = array_map( 'trim', explode( ',', $this->options['excludes'] ) );
+		$rewriter = new CDN_Rewriter(
+			$this->get_url_to_replace(),
+			$this->options['url'],
+			$this->options['dirs'],
+			$excludes,
+			$this->options['relative'],
+			$this->options['https']
 		);
+
+		if ( is_array( $sources ) ) {
+			$sources = array_map(
+				function( $source ) use ( $rewriter ) {
+					$src = $source['url'];
+					$source['url'] = $rewriter->rewrite_url( [ $src ] );
+					return $source;
+				},
+				$sources
+			);
+		}
+
+		return $sources;
 	}
 
 	/**
@@ -200,12 +304,12 @@ class CDN_Enabler {
 			return $response;
 		}
 
-		$excludes = array_map( 'trim', explode( ',', $this->options['excludes'] ) );
+		$exclude_types = CDN\sanitize_exclude_types( $this->options['exclude_types'] );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$excludes,
+			$exclude_types,
 			$this->options['relative'],
 			$this->options['https']
 		);
@@ -248,9 +352,27 @@ class CDN_Enabler {
 
 		return apply_filters( 'kinsta_cdn_url_to_replace', $url );
 	}
+
+	/**
+	 * A helper Function to check if the request is coming from wp-admin.
+	 *
+	 * @return bool
+	 */
+	public static function is_admin_referred() {
+
+		$admin_url = get_admin_url();
+		$referer = isset( $_SERVER ) && isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
+
+		if ( ! is_string( $referer ) ) {
+			return true;
+		}
+
+		return ( substr( $referer, 0, strlen( $admin_url ) ) === $admin_url );
+	}
 }
 
 /**
- * Backward compatible, WP Rocket plugin's 3.0.1 version caused fatal error without this
+ * Backward compatible.
+ * WP Rocket plugin's 3.0.1 version caused fatal error without this.
  */
-class CDNEnabler extends CDN_Enabler {}
+class CDNEnabler extends CDN_Enabler {} // phpcs:ignore Generic.Files.OneClassPerFile.MultipleFound

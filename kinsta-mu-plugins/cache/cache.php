@@ -17,9 +17,9 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 
 define( 'KINSTA_CACHE_DOCS_URL', 'https://kinsta.com/knowledgebase/kinsta-cache-plugin/' );
 
-require 'class-cache-purge.php';
-require 'class-cache-admin.php';
-require 'class-cache.php';
+require plugin_dir_path( __FILE__ ) . 'class-cache-purge.php';
+require plugin_dir_path( __FILE__ ) . 'class-cache-admin.php';
+require plugin_dir_path( __FILE__ ) . 'class-cache.php';
 
 $config = array(
 	'option_name' => 'kinsta-cache-settings',
