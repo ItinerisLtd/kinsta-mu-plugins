@@ -214,12 +214,12 @@ class CDN_Enabler {
 			return $url;
 		}
 
-		$excludes = array_map( 'trim', explode( ',', $this->options['excludes'] ) );
+		$exclude_types = array_map( 'trim', explode( ',', $this->options['exclude_types'] ) );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$excludes,
+			$exclude_types,
 			$this->options['relative'],
 			$this->options['https']
 		);
@@ -261,12 +261,12 @@ class CDN_Enabler {
 			return $url;
 		}
 
-		$excludes = array_map( 'trim', explode( ',', $this->options['excludes'] ) );
+		$exclude_types = array_map( 'trim', explode( ',', $this->options['exclude_types'] ) );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$excludes,
+			$exclude_types,
 			$this->options['relative'],
 			$this->options['https']
 		);
