@@ -208,10 +208,10 @@ class CDN_Enabler {
 
 		/**
 		 * Check if it doesn't need to run.
-		 * If it does not immediately return the WP_REST_Response.
+		 * If it does not, return the image src immediately.
 		 */
 		if ( ! $this->options || $home_url == $this->options['url'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-			return $url;
+			return $image;
 		}
 
 		$exclude_types = array_map( 'trim', explode( ',', $this->options['exclude_types'] ) );
@@ -255,10 +255,10 @@ class CDN_Enabler {
 
 		/**
 		 * Check if it doesn't need to run.
-		 * If it does not immediately return the WP_REST_Response.
+		 * If it does not, return the image srcset immediately.
 		 */
 		if ( ! $this->options || $home_url == $this->options['url'] ) { // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-			return $url;
+			return $sources;
 		}
 
 		$exclude_types = array_map( 'trim', explode( ',', $this->options['exclude_types'] ) );

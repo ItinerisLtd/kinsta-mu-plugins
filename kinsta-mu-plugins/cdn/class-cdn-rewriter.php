@@ -98,13 +98,39 @@ class CDN_Rewriter {
 	}
 
 	/**
+	 * Whether the URL should be rewritten.
+	 *
+	 * Check if the URL to rewrite is pointing to the site, or if
+	 * it's already rewritten to a CDN URL (S3, Google Cloud, etc).
+	 *
+	 * @param string $src_url The URL to rewrite to the CDN URL.
+	 * @return boolean
+	 */
+	public static function maybe_rewrite_url( $src_url = '' ) {
+
+		$home_url = get_option( 'home' );
+		$home_url_host = parse_url( $home_url, PHP_URL_HOST ); // phpcs:ignore
+
+		if ( ! is_string( $home_url_host ) || empty( $home_url_host ) ) {
+			return false;
+		}
+
+		$src_url_host = parse_url( $src_url, PHP_URL_HOST ); // phpcs:ignore
+		if ( substr( $src_url, 0, 1 ) === '/' || $src_url_host === $home_url_host ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Rewrite URL
 	 *
 	 * @param  string $asset Asset URL.
 	 * @return string        The asset with CDN URL
 	 */
 	public function rewrite_url( $asset ) {
-		if ( $this->exclude_asset( $asset[0] ) ) {
+		if ( $this->exclude_asset( $asset[0] ) || ! self::maybe_rewrite_url( $asset[0] ) ) {
 			return $asset[0];
 		}
 
