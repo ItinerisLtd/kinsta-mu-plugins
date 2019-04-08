@@ -633,7 +633,7 @@ class Banned_Plugins {
 	 */
 	private static function is_admin_plugin_page() {
 		$current_screen = get_current_screen();
-		return 'plugins' === $current_screen->base || 'plugin-install' === $current_screen->base;
+		return isset($current_screen) && is_object($current_screen) && isset($current_screen->base) && ('plugins' === $current_screen->base || 'plugin-install' === $current_screen->base);
 	}
 
 	/**

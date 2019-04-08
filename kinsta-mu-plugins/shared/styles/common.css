@@ -682,7 +682,7 @@
 	box-sizing: content-box;
 	background-repeat: no-repeat;
 	background-position: calc(100% - 11px) center;
-	background-image: url(data:image/svg+xml;utf8,<svg height="10px" id="Livello_1" style="enable-background:new 0 0 50 50;" version="1.1" viewBox="0 0 50 50" width="10px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M44.27,15.401c-0.068-0.165-0.229-0.272-0.407-0.272H6.139c-0.18,0-0.34,0.107-0.408,0.272  c-0.068,0.164-0.03,0.355,0.096,0.48l18.861,18.861c0.086,0.086,0.199,0.129,0.312,0.129c0.112,0,0.225-0.043,0.312-0.129  l18.862-18.861C44.301,15.756,44.338,15.565,44.27,15.401z"/></svg>);
+	background-image: url('data:image/svg+xml;utf8,<svg height="10px" id="Livello_1" style="enable-background:new 0 0 50 50;" version="1.1" viewBox="0 0 50 50" width="10px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M44.27,15.401c-0.068-0.165-0.229-0.272-0.407-0.272H6.139c-0.18,0-0.34,0.107-0.408,0.272  c-0.068,0.164-0.03,0.355,0.096,0.48l18.861,18.861c0.086,0.086,0.199,0.129,0.312,0.129c0.112,0,0.225-0.043,0.312-0.129  l18.862-18.861C44.301,15.756,44.338,15.565,44.27,15.401z"/></svg>');
 }
 
 #custom-url-form .prefix {

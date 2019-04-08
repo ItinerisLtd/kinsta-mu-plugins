@@ -15,7 +15,10 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 	die( 'No script kiddies please!' );
 }
 
-use Kinsta\CDN;
+use function Kinsta\CDN\is_rest_api;
+use function Kinsta\CDN\is_doing_ajax;
+use function Kinsta\CDN\is_admin_referred;
+use function Kinsta\CDN\sanitize_exclude_types;
 
 /**
  * CDN Enabler class
@@ -82,8 +85,20 @@ class CDN_Enabler {
 			add_filter( "rest_prepare_{$post_type}", array( $this, 'handle_rest_api_rewrite_hook' ) );
 		}
 
+		/**
+		 * Rewrite the image URL rendered in an admin-ajax.php request.
+		 *
+		 * WordPress does not provide a way to filter AJAX response from the admin-ajax.php
+		 * endpoint. The only viable way, for the moment, to rewrite image rendered in
+		 * the AJAX response is by directly filtering the image `src` and `srcset` URL.
+		 *
+		 * This hook will also rewrite image URLs exposed in the REST-API for custom resources
+		 * and sub-resources where the data structure is not standardized or reliably
+		 * guessed.
+		 */
 		add_filter( 'wp_get_attachment_image_src', array( $this, 'handle_image_src_rewrite_hook' ) );
 		add_filter( 'wp_calculate_image_srcset', array( $this, 'handle_image_srcset_rewrite_hook' ) );
+
 		add_action( 'template_redirect', array( $this, 'handle_rewrite_hook' ) );
 		add_action( 'all_admin_notices', array( $this, 'requirements_check' ) );
 	}
@@ -122,9 +137,7 @@ class CDN_Enabler {
 	 */
 	public static function get_options() {
 
-		$custom = array();
-		$custom['exclude_types'] = '.php';
-		$custom['dirs'] = 'wp-content,wp-includes,images';
+		$custom = [];
 
 		if ( defined( 'KINSTA_CDN_USERDIRS' ) && ! empty( KINSTA_CDN_USERDIRS ) ) {
 			$custom['dirs'] .= ',' . KINSTA_CDN_USERDIRS;
@@ -136,7 +149,10 @@ class CDN_Enabler {
 			$custom['dirs'] = $_SERVER['KINSTA_CDN_DIRECTORIES'];
 		}
 		if ( isset( $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'] ) && '' !== $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'] ) {
-			$custom['exclude_types'] .= ',' . $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'];
+			$exclude_types = sanitize_exclude_types( $_SERVER['KINSTA_CDN_EXCLUDE_TYPES'] );
+			$exclude_types = array_merge( [ '.php' ], $exclude_types );
+
+			$custom['exclude_types'] = $exclude_types;
 		}
 		if ( isset( $_SERVER['KINSTA_CDN_HTTPS'] ) && '' !== $_SERVER['KINSTA_CDN_HTTPS'] ) {
 			$custom['https'] = $_SERVER['KINSTA_CDN_HTTPS'];
@@ -144,13 +160,13 @@ class CDN_Enabler {
 
 		return wp_parse_args(
 			$custom,
-			array(
+			[
 				'url' => get_option( 'home' ),
 				'dirs' => 'wp-content,wp-includes,images',
-				'exclude_types' => '.php',
+				'exclude_types' => [ '.php' ],
 				'relative' => 1,
 				'https' => 1,
-			)
+			]
 		);
 	}
 
@@ -170,12 +186,11 @@ class CDN_Enabler {
 			return;
 		}
 
-		$exclude_types = CDN\sanitize_exclude_types( $this->options['exclude_types'] );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$exclude_types,
+			$this->options['exclude_types'],
 			$this->options['relative'],
 			$this->options['https']
 		);
@@ -196,11 +211,32 @@ class CDN_Enabler {
 	public function handle_image_src_rewrite_hook( $image ) {
 
 		/**
+		 * Check whether the current request is a WordPress AJAX,
+		 * or WordPress REST-API request.
+		 */
+
+		$doing_ajax = is_doing_ajax();
+		$rest_api = is_rest_api();
+
+		if ( ! $doing_ajax && ! $rest_api ) {
+			return $image;
+		}
+
+		/**
 		 * Only rewrite URL renderred on the front-end and rest-api request.
 		 * The attachment URL shown on admin page (the Media page as well as the one added to content
 		 * in the post editor) should still be pointing to the site URL instead of to the CDN URL.
+		 *
+		 * It checks both whether the current page is wp-admin as well as whether the request happens
+		 * in the admin area. This is because `is_admin()` will return `true` in an admin-ajax.php
+		 * request which is something we would like to avoid as we actually want to rewrite
+		 * image URL renderred from the admin-ajax.php request.
 		 */
-		if ( is_admin() && self::is_admin_referred() ) {
+
+		$admin_referred = is_admin_referred();
+		$admin_page = is_admin();
+
+		if ( $admin_page && $admin_referred ) {
 			return $image;
 		}
 
@@ -214,12 +250,11 @@ class CDN_Enabler {
 			return $image;
 		}
 
-		$exclude_types = array_map( 'trim', explode( ',', $this->options['exclude_types'] ) );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$exclude_types,
+			$this->options['exclude_types'],
 			$this->options['relative'],
 			$this->options['https']
 		);
@@ -243,11 +278,32 @@ class CDN_Enabler {
 	public function handle_image_srcset_rewrite_hook( $sources ) {
 
 		/**
+		 * Check whether the current request is a WordPress AJAX,
+		 * or WordPress REST-API request.
+		 */
+
+		$doing_ajax = is_doing_ajax();
+		$rest_api = is_rest_api();
+
+		if ( ! $doing_ajax && ! $rest_api ) {
+			return $sources;
+		}
+
+		/**
 		 * Only rewrite URL renderred on the front-end and rest-api request.
 		 * The attachment URL shown on admin page (the Media page as well as the one added to content
 		 * in the post editor) should still be pointing to the site URL instead of to the CDN URL.
+		 *
+		 * It checks both whether the current page is wp-admin as well as whether the request happens
+		 * in the admin area. This is because `is_admin()` will return `true` in an admin-ajax.php
+		 * request which is something we would like to avoid as we actually want to rewrite
+		 * image URL renderred from the admin-ajax.php request.
 		 */
-		if ( is_admin() && self::is_admin_referred() ) {
+
+		$admin_referred = is_admin_referred();
+		$admin_page = is_admin();
+
+		if ( $admin_page && $admin_referred ) {
 			return $sources;
 		}
 
@@ -261,12 +317,11 @@ class CDN_Enabler {
 			return $sources;
 		}
 
-		$exclude_types = array_map( 'trim', explode( ',', $this->options['exclude_types'] ) );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$exclude_types,
+			$this->options['exclude_types'],
 			$this->options['relative'],
 			$this->options['https']
 		);
@@ -288,6 +343,9 @@ class CDN_Enabler {
 	/**
 	 * Handle the URL rewrite in WordPress REST-API response.
 	 *
+	 * This function only handles URL rewrite in the rendered content
+	 * in the WordPress REST-API response.
+	 *
 	 * @since 2.0.17
 	 *
 	 * @param WP_REST_Response $response The response object.
@@ -304,12 +362,11 @@ class CDN_Enabler {
 			return $response;
 		}
 
-		$exclude_types = CDN\sanitize_exclude_types( $this->options['exclude_types'] );
 		$rewriter = new CDN_Rewriter(
 			$this->get_url_to_replace(),
 			$this->options['url'],
 			$this->options['dirs'],
-			$exclude_types,
+			$this->options['exclude_types'],
 			$this->options['relative'],
 			$this->options['https']
 		);
@@ -351,23 +408,6 @@ class CDN_Enabler {
 		}
 
 		return apply_filters( 'kinsta_cdn_url_to_replace', $url );
-	}
-
-	/**
-	 * A helper Function to check if the request is coming from wp-admin.
-	 *
-	 * @return bool
-	 */
-	public static function is_admin_referred() {
-
-		$admin_url = get_admin_url();
-		$referer = isset( $_SERVER ) && isset( $_SERVER['HTTP_REFERER'] ) ? $_SERVER['HTTP_REFERER'] : '';
-
-		if ( ! is_string( $referer ) ) {
-			return true;
-		}
-
-		return ( substr( $referer, 0, strlen( $admin_url ) ) === $admin_url );
 	}
 }
 

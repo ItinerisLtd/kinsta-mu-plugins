@@ -147,7 +147,7 @@ class Shared {
 	 */
 	public static function kinsta_select_field( $option_name, $name, $value, $label, $info = false, $options ) {
 		?>
-		<div class='kinsta-select-field kinsta-control-container <?php echo esc_attr( $class ); ?>' data-option-name="<?php echo esc_attr( $option_name ); ?>">
+		<div class='kinsta-select-field kinsta-control-container' data-option-name="<?php echo esc_attr( $option_name ); ?>">
 			<label>
 				<select name='<?php echo esc_attr( $name ); ?>' class='kinsta-control'>
 				<?php foreach ( $options as $option_value => $option_name ) : ?>

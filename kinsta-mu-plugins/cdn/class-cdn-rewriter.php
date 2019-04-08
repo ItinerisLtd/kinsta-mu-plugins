@@ -15,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 	die( 'No script kiddies please!' );
 }
 
+use function Kinsta\CDN\is_preview_mode;
+
 /**
  * CDN Rewriter class
  **/
@@ -109,7 +111,13 @@ class CDN_Rewriter {
 	public static function maybe_rewrite_url( $src_url = '' ) {
 
 		$home_url = get_option( 'home' );
-		$home_url_host = parse_url( $home_url, PHP_URL_HOST ); // phpcs:ignore
+
+		/**
+		 * Keep using the native PHP function instead of using `wp_parse_url`.
+		 * The `wp_parse_url` is only added in WordPress 4.4.0 and some
+		 * client site's may still be using older WordPress version.
+		 */
+		$home_url_host = parse_url( $home_url, PHP_URL_HOST ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url
 
 		if ( ! is_string( $home_url_host ) || empty( $home_url_host ) ) {
 			return false;
@@ -126,7 +134,7 @@ class CDN_Rewriter {
 	/**
 	 * Rewrite URL
 	 *
-	 * @param  string $asset Asset URL.
+	 * @param  array $asset Asset URL.
 	 * @return string        The asset with CDN URL
 	 */
 	public function rewrite_url( $asset ) {
@@ -134,7 +142,7 @@ class CDN_Rewriter {
 			return $asset[0];
 		}
 
-		if ( is_admin_bar_showing() && array_key_exists( 'preview', $_GET ) && 'true' == $_GET['preview'] ) { // WPCS: loose comparison ok, CSRF ok.
+		if ( is_admin_bar_showing() && is_preview_mode() ) { // WPCS: loose comparison ok, CSRF ok.
 			return $asset[0];
 		}
 
