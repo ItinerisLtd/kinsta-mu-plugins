@@ -57,6 +57,8 @@ class Banned_Plugins {
 		'backupbuddy/backupbuddy.php',
 		'snapshot/snapshot.php',
 		'sg-cachepress/sg-cachepress.php',
+		'litespeed-cache/litespeed-cache.php',
+		'p3/p3.php', // Pipdig Power Pack plugin.
 	];
 
 	/**
@@ -78,7 +80,6 @@ class Banned_Plugins {
 	 * Sets up the options filter, and optionally handles an array of plugins to disable.
 	 */
 	public function __construct() {
-		$this->disable_wordfences_livelogging();
 		$this->check_server_banned_plugin_lists();
 
 		$this->banned_list = array_merge( $this->warning_list, $this->disabled_list );  // Full list of Banned Plugins.
@@ -122,7 +123,6 @@ class Banned_Plugins {
 
 		add_action( 'admin_init', [ $this, 'deactivate_disabled_plugins' ], PHP_INT_MAX );
 		add_action( 'activated_plugin', [ $this, 'deactivate_disabled_plugin' ], PHP_INT_MAX );
-		add_action( 'admin_notices', [ $this, 'compatibility_admin_notices' ], PHP_INT_MAX );
 
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_scripts' ], PHP_INT_MAX );
 		add_action( 'admin_print_scripts', [ $this, 'add_plugin_page_scripts' ], PHP_INT_MAX );
@@ -162,25 +162,6 @@ class Banned_Plugins {
 			</div>
 		</div>
 		<?php
-	}
-
-	/**
-	 * Disaplay admin notice for all the users in case of major issues.
-	 *
-	 * @return void
-	 */
-	public function compatibility_admin_notices() {
-
-		// Check if the WORDFENCE_DISABLE_LIVE_TRAFFIC is set to "false".
-		if ( ! WORDFENCE_DISABLE_LIVE_TRAFFIC ) {
-			?>
-			<div id="kinsta-banned-plugins-nag" class="notice notice-kinsta notice-error">
-				<p>
-					<?php esc_html_e( 'We\'ve detected that the <code>WORDFENCE_DISABLE_LIVE_TRAFFIC</code> constant has been set to <code>false</code>. This can cause significant performance issues for your site. Please remove this constant from your site\'s wp-config.php file or from the plugin or theme file where it has been defined.', 'kinsta-mu-plugins' ); ?>
-				</p>
-			</div>
-			<?php
-		}
 	}
 
 	/**
@@ -633,7 +614,7 @@ class Banned_Plugins {
 	 */
 	private static function is_admin_plugin_page() {
 		$current_screen = get_current_screen();
-		return isset($current_screen) && is_object($current_screen) && isset($current_screen->base) && ('plugins' === $current_screen->base || 'plugin-install' === $current_screen->base);
+		return isset( $current_screen ) && is_object( $current_screen ) && isset( $current_screen->base ) && ( 'plugins' === $current_screen->base || 'plugin-install' === $current_screen->base );
 	}
 
 	/**
@@ -656,20 +637,5 @@ class Banned_Plugins {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Disable wordfence's live logging
-	 *
-	 * @return void
-	 */
-	private function disable_wordfences_livelogging() {
-
-		if ( ! defined( 'WORDFENCE_DISABLE_LIVE_TRAFFIC' ) ) {
-
-			// Disable live logging.
-			define( 'WORDFENCE_DISABLE_LIVE_TRAFFIC', true );
-		}
-
 	}
 }

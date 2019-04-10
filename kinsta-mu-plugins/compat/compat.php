@@ -12,6 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) { // If this file is called directly.
 	die( 'No script kiddies please!' );
 }
 
+// Load files that will handle 3rd-party plugins compatibility.
+require_once plugin_dir_path( __FILE__ ) . 'third-party/wordfence.php';
+require_once plugin_dir_path( __FILE__ ) . 'third-party/swift-performance.php';
+
 // Load required files.
 require_once plugin_dir_path( __FILE__ ) . 'utilities.php';
 require_once plugin_dir_path( __FILE__ ) . 'class-banned-plugins.php';
