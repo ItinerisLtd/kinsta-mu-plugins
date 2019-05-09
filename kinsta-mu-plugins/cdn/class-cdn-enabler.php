@@ -140,7 +140,7 @@ class CDN_Enabler {
 		$custom = [];
 
 		if ( defined( 'KINSTA_CDN_USERDIRS' ) && ! empty( KINSTA_CDN_USERDIRS ) ) {
-			$custom['dirs'] .= ',' . KINSTA_CDN_USERDIRS;
+			$custom['dirs'] = 'wp-content,wp-includes,images,' . KINSTA_CDN_USERDIRS;
 		}
 		if ( isset( $_SERVER['KINSTA_CDN_DOMAIN'] ) && '' !== $_SERVER['KINSTA_CDN_DOMAIN'] ) {
 			$custom['url'] = 'https://' . $_SERVER['KINSTA_CDN_DOMAIN'];
