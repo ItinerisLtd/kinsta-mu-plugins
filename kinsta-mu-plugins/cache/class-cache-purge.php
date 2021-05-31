@@ -74,6 +74,7 @@ class Cache_Purge {
 	 */
 	public function __construct( $kinsta_cache ) {
 		global $wp_rewrite;
+		global $wp_version;
 
 		$this->kinsta_cache = $kinsta_cache;
 		$this->posts_page_id = get_option( 'page_for_posts' );
@@ -82,14 +83,15 @@ class Cache_Purge {
 		$this->purge_single_happened = false;
 		$this->purge_all_happened = false;
 
-		add_action( 'transition_post_status', array( $this, 'post_published' ), 10, 3 );
+		add_action( 'edit_comment', array( $this, 'comment_edit_actions' ), 10, 2 );
 		add_action( 'pre_post_update', array( $this, 'post_unpublished' ), 10, 2 );
-		add_action( 'post_updated', array( $this, 'post_updated' ), 10, 3 );
-		add_action( 'wp_trash_post', array( $this, 'post_trashed' ), 10 );
+
+		add_action( 'transition_comment_status', array( $this, 'comment_transition_actions' ), 10, 3 );
+		add_action( 'transition_post_status', array( $this, 'post_published' ), 10, 3 );
 
 		add_action( 'wp_insert_comment', array( $this, 'comment_insert_actions' ), 10, 2 );
-		add_action( 'edit_comment', array( $this, 'comment_edit_actions' ), 10, 2 );
-		add_action( 'transition_comment_status', array( $this, 'comment_transition_actions' ), 10, 3 );
+		add_action( 'wp_insert_post', array( $this, 'post_updated' ), 10, 3 );
+		add_action( 'wp_trash_post', array( $this, 'post_trashed' ), 10 );
 		add_action( 'wp_update_nav_menu', array( $this, 'purge_complete_caches' ) );
 	}
 
@@ -102,6 +104,7 @@ class Cache_Purge {
 	 * @return void
 	 */
 	public function post_published( $new_status, $old_status, $post ) {
+
 		if ( $new_status === $old_status || $this->purge_single_happened ) {
 			return;
 		}
@@ -140,20 +143,21 @@ class Cache_Purge {
 	/**
 	 * Figures out which published post is updated and initiates a cache purge with that post.
 	 *
-	 * @param int     $post_ID The post ID.
+	 * @param int     $post_id The post ID.
 	 * @param WP_Post $post_after Post object following the update.
-	 * @param WP_Post $post_before Post object following the update.
+	 * @param bool    $update Whether this is an existing post being updated.
 	 * @return void
 	 */
-	public function post_updated( $post_ID, $post_after, $post_before ) {
+	public function post_updated( $post_id, $post, $update ) {
+
 		if ( $this->purge_single_happened || wp_is_post_autosave( $post_ID ) || wp_is_post_revision( $post_ID ) ) {
 			return;
 		}
 
 		// Clear cache when the post updated, and only when it's already / still published.
-		if ( 'publish' === $post_after->post_status && 'publish' === $post_before->post_status ) {
+		if ( $update === true && 'publish' === get_post_status( $post_id ) ) {
 			$this->purge_single_happened = true;
-			$this->initiate_purge( $post_ID, 'post' );
+			$this->initiate_purge( $post_id, 'post' );
 		}
 	}
 
