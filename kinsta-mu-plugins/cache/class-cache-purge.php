@@ -150,7 +150,7 @@ class Cache_Purge {
 	 */
 	public function post_updated( $post_id, $post, $update ) {
 
-		if ( $this->purge_single_happened || wp_is_post_autosave( $post_ID ) || wp_is_post_revision( $post_ID ) ) {
+		if ( $this->purge_single_happened || wp_is_post_autosave( $post_id ) || wp_is_post_revision( $post_id ) ) {
 			return;
 		}
 
@@ -282,7 +282,13 @@ class Cache_Purge {
 
 		$archives = $this->get_post_archives_list( $post );
 
-		$purge_list['throttled'] = $archives;
+		$purge_list = array(
+			'throttled' => $archives,
+			'immediate' => array(
+				'single' => array(),
+				'group' => array(),
+			),
+		);
 
 		// Immediately remove first three pages of archives.
 		foreach ( $archives['group'] as $key => $url ) {
@@ -432,6 +438,11 @@ class Cache_Purge {
 		unset( $taxonomies['link_category'] );
 		$taxonomies = array_values( $taxonomies );
 		$terms = wp_get_object_terms( $post->ID, $taxonomies );
+
+		$purge = array(
+			'group' => array(),
+			'single' => array(),
+		);
 
 		// Author Archive.
 		$purge['group']['author'] = get_author_posts_url( $post->post_author );
