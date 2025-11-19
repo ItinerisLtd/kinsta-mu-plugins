@@ -4,14 +4,14 @@
   "type": "wordpress-muplugin",
   "license": "proprietary",
   "require": {
-    "composer/installers": "^1.6"
+    "composer/installers": "^1.6 || ^2.3"
   },
   "extra": {
     "composify": {
       "zip": "https://kinsta.com/kinsta-tools/kinsta-mu-plugins.zip",
       "file": "kinsta-mu-plugins.php",
       "version": "3.3.2",
-      "build-at": "2025-08-04T10:46:14.341Z"
+      "build-at": "2025-11-19T12:45:03.806Z"
     }
   }
 }
