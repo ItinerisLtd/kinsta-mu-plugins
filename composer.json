@@ -10,8 +10,8 @@
     "composify": {
       "zip": "https://kinsta.com/kinsta-tools/kinsta-mu-plugins.zip",
       "file": "kinsta-mu-plugins.php",
-      "version": "3.6.1",
-      "build-at": "2026-06-26T00:23:33.742Z"
+      "version": "3.7.0",
+      "build-at": "2026-08-26T00:03:40.672Z"
     }
   }
 }
